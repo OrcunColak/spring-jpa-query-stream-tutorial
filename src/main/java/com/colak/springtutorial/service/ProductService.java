@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 @Service
@@ -23,10 +24,15 @@ public class ProductService {
     @Transactional(readOnly = true)
     public void findByDescription(String description) {
         try (Stream<Product> productStream = productRepository.findByDescription(description)) {
+            AtomicInteger counter = new AtomicInteger();
             productStream.forEach(product -> {
                 log.info(product.getName());
 
-                entityManager.clear();
+                int value = counter.incrementAndGet();
+                if (value == 50) {
+                    counter.set(0);
+                    entityManager.clear();
+                }
             });
         }
     }
